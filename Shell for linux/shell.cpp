@@ -49,11 +49,11 @@ int main()
 
         printf("osh>");
         fflush(stdout);
-        //input solve
+        //input process
         char str[MAX_LINE];
         gets(str);
 
-        //solve !
+        //process !
         if(str[0] == '!' && strlen(str) > 1){
             if(str[1] == '!'){
                 if(count_cmd==0){
@@ -80,6 +80,17 @@ int main()
 
         int arg_num; bool amp;
         splitString(str,args,arg_num,amp);
+
+        //process 'cd'
+        if(strcmp("cd",args[0])==0){
+            if(arg_num==1) continue;
+            char path[MAX_LINE];
+            strncpy(path,str+3,strlen(str));
+            chdir(path);
+            continue;
+        }
+        //end 'cd'
+
         history[count_cmd] = (char*)malloc(MAX_LINE);
         strcpy(history[count_cmd],str);
         count_cmd++;
