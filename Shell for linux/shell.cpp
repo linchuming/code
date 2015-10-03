@@ -46,8 +46,10 @@ int main()
     int should_run = 1;
     int count_cmd = 0;
     while(should_run){
-
-        printf("osh>");
+        char pp[MAX_LINE];
+        getcwd(pp,MAX_LINE);
+        printf("%s$ ",pp);
+        //printf("");
         fflush(stdout);
         //input process
         char str[MAX_LINE];
@@ -114,7 +116,8 @@ int main()
                 execvp(args[0],args);
             }
         }else{
-            if(!amp) wait(NULL);
+            int status;
+            if(!amp) waitpid(pid,&status,NULL);
         }
 
     }
