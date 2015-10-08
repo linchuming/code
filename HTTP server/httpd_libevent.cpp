@@ -19,32 +19,60 @@ void signal_handler(int sig)
         break;
     }
 }
-char output[2048];
+char output[8000000] ;
+
+struct evbuffer *buf1;
 void httpd_handler(struct evhttp_request *req,void *arg)
 {
     const char *uri;
     uri = evhttp_request_uri(req);
-
-    printf("visitor connencted %s\n",uri);
+    char path[80] = "web";
+    //printf("visitor connencted %s\n",uri);
     //HTTP header
     evhttp_add_header(req->output_headers,"Server","cmlin's httpd server");
-    evhttp_add_header(req->output_headers,"Content-Type","text/html;charset=UTF-8");
     evhttp_add_header(req->output_headers,"Connection","close");
 
-
+	/* only for the experiment
+    if(strcmp(uri,"/") == 0) {
+        evhttp_add_header(req->output_headers,"Content-Type","text/html");
+		evhttp_send_reply(req,HTTP_OK,"OK",buf1);
+		return;
+	}
+	*/
 
     struct evbuffer *buf;
     buf = evbuffer_new();
     //evbuffer_add_printf(buf,"%s",output);
     if(strcmp(uri,"/") == 0) {
-        evbuffer_add(buf,output,2048);
+        evhttp_add_header(req->output_headers,"Content-Type","text/html");
+		evbuffer_add(buf,output,strlen(output));
     }else if(strstr(uri,".jpg")) {
-        char path[80] = "web";
         strcat(path,uri);
         int fd = open(path,O_RDONLY);
+        if(fd < 0) goto err;
         struct stat st;
         fstat(fd,&st);
+	evhttp_add_header(req->output_headers,"Content-Type","image/jpeg");
         evbuffer_add_file(buf,fd,0,st.st_size);
+	close(fd);
+    }else if(strstr(uri,".css")) {
+        strcat(path,uri);
+        int fd = open(path,O_RDONLY);
+        if(fd < 0) goto err;
+        struct stat st;
+        fstat(fd,&st);
+	evhttp_add_header(req->output_headers,"Content-Type","text/css");
+        evbuffer_add_file(buf,fd,0,st.st_size);
+	close(fd);
+    }else if(strstr(uri,".html")) {
+	strcat(path,uri);
+	int fd = open(path,O_RDONLY);
+	if(fd < 0) goto err;
+	struct stat st;
+	fstat(fd,&st);
+	evhttp_add_header(req->output_headers,"Content-Type","text/html");
+	evbuffer_add_file(buf,fd,0,st.st_size);
+	close(fd);
     }
     /*
     int fd = open("web/1.jpg",O_RDONLY);
@@ -54,6 +82,7 @@ void httpd_handler(struct evhttp_request *req,void *arg)
     evbuffer_add_file(buf,fd,0,st.st_size);
     */
     evhttp_send_reply(req,HTTP_OK,"OK",buf);
+    err:
     evbuffer_free(buf);
 
 
@@ -67,11 +96,14 @@ int main()
 
     int httpd_port = 8080;
     int httpd_timeout = 120;
-
+	
     FILE* f = fopen("web/index.html","r");
-    fread(output,2048,1,f);
+    fread(output,8000000,1,f);
     fclose(f);
-
+	/* only for the experiment
+	buf1 = evbuffer_new();
+	evbuffer_add(buf1,output,strlen(output));
+	*/
 
     event_init();
 
